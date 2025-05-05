@@ -5,7 +5,7 @@ const API_URL = 'https://lila-backend.onrender.com';
 // Supabase configuration
 const supabaseUrl = 'https://enzpvlvwgolrpxxhmret.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuenB2bHZ3Z29scnB4eGhtcmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDM2MjksImV4cCI6MjA2MTg3OTYyOX0.tKIEOPlHJot-QT7j-AAkcmaHuWrmURBMULOz6ckxGHQ'; // Your public anon key (safe to expose)
-const supabaseClient = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey); // Changed variable name to match usage
 
 async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser();
