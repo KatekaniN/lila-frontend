@@ -1,17 +1,13 @@
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
-
-const API_URL = 'https://your-backend-url.com/api';
-
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 //import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
-const supabaseUrl = "https://lila-backend.onrender.com";
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const API_URL = 'https://lila-backend.onrender.com';
 
+// Supabase configuration
+const supabaseUrl = 'https://enzpvlvwgolrpxxhmret.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuenB2bHZ3Z29scnB4eGhtcmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDM2MjksImV4cCI6MjA2MTg3OTYyOX0.tKIEOPlHJot-QT7j-AAkcmaHuWrmURBMULOz6ckxGHQ'; // Your public anon key (safe to expose)
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
