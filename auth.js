@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
-const API_URL = 'https://lila-backend.onrender.com';
+const API_URL = 'https://lila-backend.onrender.com/api';
+
 
 // Supabase configuration
 const supabaseUrl = 'https://enzpvlvwgolrpxxhmret.supabase.co';
