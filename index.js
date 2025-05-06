@@ -282,7 +282,7 @@ function createChatListItem(chat) {
     // Create edit icon
     const editIcon = document.createElement('img');
     editIcon.classList.add('edit-icon');
-    editIcon.src = './images/edit-icon.svg'; // Make sure you have this icon
+    editIcon.src = './images/edit-button.svg';
     editIcon.alt = 'Edit';
     editBtn.appendChild(editIcon);
 

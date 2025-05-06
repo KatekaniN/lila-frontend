@@ -634,7 +634,7 @@ img.delete-icon {
     justify-content: center;
     opacity: 0.7;
     transition: opacity 0.2s;
-    margin-left: 4px;
+    margin-right: 24px;
 }
 
 .chat-edit-btn:hover,
