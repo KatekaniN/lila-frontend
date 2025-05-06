@@ -615,8 +615,14 @@ img.delete-icon {
 .chat-buttons {
     display: flex;
     align-items: center;
+    gap: 8px;
+    /* Add gap between buttons */
     opacity: 0;
     transition: opacity 0.2s ease;
+    margin-left: auto;
+    /* Push buttons to the right */
+    padding-left: 10px;
+    /* Add some space between title and buttons */
 }
 
 .chat-list-item:hover .chat-buttons {
@@ -634,7 +640,7 @@ img.delete-icon {
     justify-content: center;
     opacity: 0.7;
     transition: opacity 0.2s;
-    margin-right: 24px;
+    /* Remove margin-right from here */
 }
 
 .chat-edit-btn:hover,
@@ -642,9 +648,10 @@ img.delete-icon {
     opacity: 1;
 }
 
-.edit-icon {
+/* Remove this rule that's causing the issue */
+/* .edit-icon {
     margin-right: 40px;
-}
+  } */
 
 .edit-icon,
 .delete-icon {
@@ -652,25 +659,16 @@ img.delete-icon {
     height: 16px;
 }
 
-/* Edit mode styling */
-.chat-list-item.editing {
-    background-color: rgba(243, 53, 173, 0.05);
-}
-
-.chat-title-edit {
-    width: calc(100% - 60px);
-    border: 1px solid #f335ad;
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: inherit;
-    font-family: inherit;
-    background: rgba(255, 255, 255, 0.9);
-    color: #333;
-}
-
-.chat-title-edit:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(243, 53, 173, 0.2);
+/* Update chat list item layout */
+.chat-list-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    /* Use consistent padding */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    position: relative;
 }
 
 /* Make sure the chat title has proper overflow handling */
@@ -679,13 +677,6 @@ img.delete-icon {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding-right: 8px;
-}
-
-/* Ensure the chat list item has proper layout */
-.chat-list-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-right: 10px;
+    margin-right: auto;
+    /* Push title to the left */
 }
