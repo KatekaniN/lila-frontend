@@ -51,18 +51,35 @@ async function getAuthToken() {
     return data.session?.access_token;
 }
 
+// Loading screen handling
 function hideLoadingScreen() {
     const loadingScreen = document.getElementById('loading-screen');
+    const appContent = document.getElementById('app-content');
+
     if (loadingScreen) {
+        // First make app content visible but with opacity 0
+        if (appContent) {
+            appContent.style.display = 'flex'; // or whatever display value is appropriate
+            appContent.style.opacity = '0';
+        }
+
+        // Add hidden class to loading screen (starts fade out)
         loadingScreen.classList.add('hidden');
+
+        // After loading screen starts fading out, fade in the app content
         setTimeout(() => {
-            loadingScreen.style.display = 'none';
-        }, 500); // Match this to your CSS transition time
+            if (appContent) {
+                appContent.style.transition = 'opacity 0.3s ease-in';
+                appContent.style.opacity = '1';
+            }
+
+            // Finally remove loading screen from DOM after transition completes
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500); // Match this to your CSS transition time
+        }, 200); // Small delay before starting app content fade-in
     }
 }
-
-
-// Load user's chats from Supabase
 async function loadUserChats() {
     try {
         console.log("Loading chats for user:", currentUser.id);
@@ -82,29 +99,23 @@ async function loadUserChats() {
 
         console.log("Loaded chats:", userChats.length);
 
-        // Clear existing chat items
+        // Get the chats section
         const chatsSection = document.getElementById('chatsSection');
-        const existingChatItems = chatsSection.querySelectorAll('.chat-list-item');
-        existingChatItems.forEach(item => item.remove());
 
-        // Remove existing date headers except the main "Chats" header
-        const dateHeaders = chatsSection.querySelectorAll('.date-header');
-        dateHeaders.forEach(header => header.remove());
+        // Clear everything except the chats header
+        chatsSection.innerHTML = '';
+
+        // Re-add the chats header
+        const chatsHeader = document.createElement('div');
+        chatsHeader.classList.add('chats-header');
+        chatsHeader.textContent = 'Chats';
+        chatsSection.appendChild(chatsHeader);
 
         // Group chats by date
         const chatsByDate = groupChatsByDate(userChats);
 
         // Add chats to sidebar
         let firstDateHeader = null;
-
-        // Make sure the "Chats" header exists
-        let chatsHeader = chatsSection.querySelector('.chats-header');
-        if (!chatsHeader) {
-            chatsHeader = document.createElement('div');
-            chatsHeader.classList.add('chats-header');
-            chatsHeader.textContent = 'Chats';
-            chatsSection.appendChild(chatsHeader);
-        }
 
         Object.keys(chatsByDate).forEach(date => {
             // Create date header
@@ -722,14 +733,13 @@ signOut.addEventListener('click', () => {
 
 // Modify your initApp function
 async function initApp() {
+    console.log("Initializing app...");
     try {
-        console.log("Initializing app...");
         // First check if backend is available
         try {
             const response = await fetch(`${API_URL}/health`, {
                 method: 'GET',
                 headers: { 'Cache-Control': 'no-cache' },
-                // Short timeout to prevent long waits
                 signal: AbortSignal.timeout(5000)
             });
 
@@ -738,13 +748,12 @@ async function initApp() {
             }
         } catch (error) {
             console.warn("Backend might be starting up:", error);
-            // Continue anyway, as it might just be waking up
         }
 
         // Check authentication
         await checkAuth();
 
-        // Hide loading screen after everything is initialized
+        // Only now hide the loading screen
         hideLoadingScreen();
     } catch (error) {
         console.error("Error during initialization:", error);
