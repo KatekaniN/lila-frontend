@@ -642,10 +642,14 @@ img.delete-icon {
     opacity: 1;
 }
 
+.edit-icon {
+    margin-right: 40px;
+}
+
 .edit-icon,
 .delete-icon {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
 }
 
 /* Edit mode styling */
