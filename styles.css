@@ -419,7 +419,6 @@ img.sign-out {
 .chat-list-item {
     position: relative;
     padding-right: 30px;
-    /* Make room for the delete button */
 }
 
 .chat-delete-btn {
@@ -610,4 +609,79 @@ img.delete-icon {
 /* Clear search button */
 .search-bar {
     position: relative;
+}
+
+/* Chat item buttons */
+.chat-buttons {
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.chat-list-item:hover .chat-buttons {
+    opacity: 1;
+}
+
+.chat-edit-btn,
+.chat-delete-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    margin-left: 4px;
+}
+
+.chat-edit-btn:hover,
+.chat-delete-btn:hover {
+    opacity: 1;
+}
+
+.edit-icon,
+.delete-icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* Edit mode styling */
+.chat-list-item.editing {
+    background-color: rgba(243, 53, 173, 0.05);
+}
+
+.chat-title-edit {
+    width: calc(100% - 60px);
+    border: 1px solid #f335ad;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: inherit;
+    font-family: inherit;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+}
+
+.chat-title-edit:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(243, 53, 173, 0.2);
+}
+
+/* Make sure the chat title has proper overflow handling */
+.chat-title {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 8px;
+}
+
+/* Ensure the chat list item has proper layout */
+.chat-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 10px;
 }

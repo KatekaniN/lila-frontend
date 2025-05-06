@@ -210,7 +210,7 @@ function groupChatsByDate(chats) {
 }
 
 // Create a chat list item element with delete button
-function createChatListItem(chat) {
+/*function createChatListItem(chat) {
     // Create the main container
     const chatItem = document.createElement('div');
     chatItem.classList.add('chat-list-item');
@@ -255,7 +255,185 @@ function createChatListItem(chat) {
 
     return chatItem;
 }
+*/
 
+// Create a chat list item element with delete and edit buttons
+function createChatListItem(chat) {
+    // Create the main container
+    const chatItem = document.createElement('div');
+    chatItem.classList.add('chat-list-item');
+    chatItem.setAttribute('data-id', chat.id);
+
+    // Create a span for the chat title (allows for better text overflow handling)
+    const chatTitle = document.createElement('span');
+    chatTitle.classList.add('chat-title');
+    chatTitle.textContent = chat.title || 'New Chat';
+    chatItem.appendChild(chatTitle);
+
+    // Create button container for better positioning
+    const buttonContainer = document.createElement('div');
+    buttonContainer.classList.add('chat-buttons');
+
+    // Create edit button
+    const editBtn = document.createElement('button');
+    editBtn.classList.add('chat-edit-btn');
+    editBtn.setAttribute('title', 'Edit chat name');
+
+    // Create edit icon
+    const editIcon = document.createElement('img');
+    editIcon.classList.add('edit-icon');
+    editIcon.src = './images/edit-icon.svg'; // Make sure you have this icon
+    editIcon.alt = 'Edit';
+    editBtn.appendChild(editIcon);
+
+    // Add edit functionality
+    editBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent chat selection when clicking edit
+        startEditingChatName(chat.id, chatTitle);
+    });
+
+    // Create delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.classList.add('chat-delete-btn');
+    deleteBtn.setAttribute('title', 'Delete chat');
+
+    // Create delete icon
+    const deleteIcon = document.createElement('img');
+    deleteIcon.classList.add('delete-icon');
+    deleteIcon.src = './images/delete-icon.svg';
+    deleteIcon.alt = 'Delete';
+    deleteBtn.appendChild(deleteIcon);
+
+    // Add delete functionality
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent chat selection when clicking delete
+
+        if (confirm('Are you sure you want to delete this chat?')) {
+            deleteChatById(chat.id);
+        }
+    });
+
+    // Add buttons to container
+    buttonContainer.appendChild(editBtn);
+    buttonContainer.appendChild(deleteBtn);
+
+    // Add button container to chat item
+    chatItem.appendChild(buttonContainer);
+
+    // Add click event for selecting the chat
+    chatItem.addEventListener('click', function () {
+        document.querySelectorAll('.chat-list-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+        currentChatId = this.getAttribute('data-id');
+        displayMessages(currentChatId);
+    });
+
+    return chatItem;
+}
+
+function startEditingChatName(chatId, titleElement) {
+    // Create an input element
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'chat-title-edit';
+    input.value = titleElement.textContent;
+    input.maxLength = 50; // Reasonable max length
+
+    // Store original text in case of cancel
+    const originalText = titleElement.textContent;
+
+    // Replace the title element with the input
+    const chatItem = titleElement.closest('.chat-list-item');
+    chatItem.classList.add('editing');
+
+    // Replace title with input
+    titleElement.style.display = 'none';
+    chatItem.insertBefore(input, titleElement);
+
+    // Focus the input and select all text
+    input.focus();
+    input.select();
+
+    // Handle saving on Enter key
+    input.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            await saveChatName(chatId, input.value.trim() || originalText);
+            finishEditing(chatItem, titleElement, input);
+        } else if (e.key === 'Escape') {
+            // Cancel editing on Escape
+            finishEditing(chatItem, titleElement, input, originalText);
+        }
+    });
+
+    // Handle blur (clicking outside)
+    input.addEventListener('blur', async () => {
+        // Save if the value has changed
+        if (input.value.trim() !== originalText && input.value.trim() !== '') {
+            await saveChatName(chatId, input.value.trim());
+        }
+        finishEditing(chatItem, titleElement, input, input.value.trim() || originalText);
+    });
+
+    // Prevent the chat from being selected when clicking the input
+    input.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+}
+
+// Function to finish editing and restore normal display
+function finishEditing(chatItem, titleElement, input, newText = null) {
+    // Remove editing class
+    chatItem.classList.remove('editing');
+
+    // Update title text if provided
+    if (newText !== null) {
+        titleElement.textContent = newText;
+    }
+
+    // Show the title element again
+    titleElement.style.display = '';
+
+    // Remove the input
+    if (input && input.parentNode) {
+        input.parentNode.removeChild(input);
+    }
+}
+
+// Function to save the new chat name to the server
+async function saveChatName(chatId, newName) {
+    try {
+        // Find the chat in local array
+        const chat = userChats.find(c => c.id === chatId);
+        if (!chat) return;
+
+        // Update in backend API
+        const token = await getAuthToken();
+        const response = await fetch(`${API_URL}/chats/${chatId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                title: newName,
+                messages: chat.messages || []
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update chat name');
+        }
+
+        // Update in local array
+        chat.title = newName;
+
+        console.log(`Chat name updated to: ${newName}`);
+    } catch (error) {
+        console.error('Error saving chat name:', error);
+        // You could show an error message to the user here
+    }
+}
 // Create a new chat
 async function createNewChat() {
     try {
@@ -412,7 +590,7 @@ async function getChatHistory(chatId) {
     }
 }
 
-// Save chat history to Supabase
+/* Save chat history to Supabase
 async function saveChatHistory(chatId, history) {
     try {
         // Update the chat title based on the first user message if it's "New Chat"
@@ -454,6 +632,63 @@ async function saveChatHistory(chatId, history) {
             const chatItem = document.querySelector(`.chat-list-item[data-id="${chatId}"]`);
             if (chatItem) {
                 chatItem.textContent = title;
+            }
+
+            // Update in our local array
+            chat.title = title;
+        }
+    } catch (error) {
+        console.error('Error saving chat history:', error);
+    }
+}*/
+
+async function saveChatHistory(chatId, history) {
+    try {
+        // Update the chat title based on the first user message if it's "New Chat"
+        let title = 'New Chat';
+        const chat = userChats.find(c => c.id === chatId);
+
+        // Only auto-generate title if it's still the default "New Chat"
+        if (chat && chat.title === 'New Chat' && history.length > 0) {
+            const firstUserMessage = history.find(msg => msg.role === 'user');
+            if (firstUserMessage) {
+                // Use first 30 chars of first message as title
+                title = firstUserMessage.parts[0].text.substring(0, 30);
+                if (firstUserMessage.parts[0].text.length > 30) {
+                    title += '...';
+                }
+            }
+        } else if (chat) {
+            // Keep the existing title (which might be custom)
+            title = chat.title;
+        }
+
+        // Update in backend API
+        const token = await getAuthToken();
+        const response = await fetch(`${API_URL}/chats/${chatId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                messages: history,
+                title: title
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save chat history');
+        }
+
+        // Update the chat title in the UI if it's a new chat
+        if (chat && chat.title === 'New Chat') {
+            const chatItem = document.querySelector(`.chat-list-item[data-id="${chatId}"]`);
+            if (chatItem) {
+                const titleElement = chatItem.querySelector('.chat-title');
+                if (titleElement) {
+                    titleElement.textContent = title;
+                }
             }
 
             // Update in our local array
@@ -795,7 +1030,12 @@ const progressInterval = setInterval(() => {
 searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase().trim();
 
-    // Get all chat items
+    // Show/hide clear button based on input content
+    if (searchInput.value) {
+        clearSearchBtn.style.display = 'flex';
+    } else {
+        clearSearchBtn.style.display = 'none';
+    }
     const chatItems = document.querySelectorAll('.chat-list-item');
 
     // Track if we have any matches
