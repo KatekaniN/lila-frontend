@@ -9,6 +9,7 @@ const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 
 const chatInput = document.getElementById('chatInput');
+const clearSearchBtn = document.getElementById('clearSearch');
 const sendBtn = document.getElementById('sendBtn');
 const chatMessages = document.getElementById('chatMessages');
 const newChatBtn = document.getElementById('newChatBtn');
@@ -23,6 +24,8 @@ const signOut = document.getElementById('signOut');
 let currentChatId = 'default';
 let currentUser = null;
 let userChats = [];
+
+
 
 // Check if user is logged in
 async function checkAuth() {
@@ -155,6 +158,16 @@ async function loadUserChats() {
         console.error('Error loading chats:', error);
     }
 }
+clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+
+    // Trigger the input event to update the search results
+    searchInput.dispatchEvent(new Event('input'));
+
+    // Focus back on the search input
+    searchInput.focus();
+});
 
 // Group chats by date
 function groupChatsByDate(chats) {
@@ -701,19 +714,6 @@ newChatBtn.addEventListener('click', () => {
     createNewChat();
 });
 
-searchInput.addEventListener('input', () => {
-    const searchTerm = searchInput.value.toLowerCase();
-
-    // Filter chat items
-    document.querySelectorAll('.chat-list-item').forEach(item => {
-        const text = item.textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            item.style.display = 'block';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-});
 
 backToHome.addEventListener('click', () => {
     window.location.href = 'https://aifricaapp.com';
@@ -790,6 +790,111 @@ const progressInterval = setInterval(() => {
         loadingText.textContent = `Loading... ${loadingProgress}%`;
     }
 }, 500);
+
+// Replace the simple filtering with this enhanced version that highlights matches
+searchInput.addEventListener('input', () => {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+
+    // Get all chat items
+    const chatItems = document.querySelectorAll('.chat-list-item');
+
+    // Track if we have any matches
+    let hasMatches = false;
+
+    // Track which date headers have visible chats
+    const dateHeaders = document.querySelectorAll('.date-header');
+    const visibleHeaderMap = {};
+
+    // Initialize all headers as not having visible items
+    dateHeaders.forEach(header => {
+        visibleHeaderMap[header.textContent] = false;
+    });
+
+    // Filter chat items
+    chatItems.forEach(item => {
+        const titleElement = item.querySelector('.chat-title') || item;
+        const originalText = titleElement.getAttribute('data-original-text') || titleElement.textContent;
+
+        // Store original text if not already stored
+        if (!titleElement.getAttribute('data-original-text')) {
+            titleElement.setAttribute('data-original-text', originalText);
+        }
+
+        if (searchTerm && originalText.toLowerCase().includes(searchTerm)) {
+            item.style.display = 'flex'; // or whatever your default display value is
+            hasMatches = true;
+
+            // Highlight matching text
+            const regex = new RegExp(`(${searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+            titleElement.innerHTML = originalText.replace(regex, '<span class="highlight">$1</span>');
+
+            // Find the preceding date header
+            let header = item.previousElementSibling;
+            while (header && !header.classList.contains('date-header')) {
+                header = header.previousElementSibling;
+            }
+
+            if (header && header.classList.contains('date-header')) {
+                visibleHeaderMap[header.textContent] = true;
+            }
+        } else {
+            // Reset to original text if no search term or no match
+            if (!searchTerm) {
+                titleElement.textContent = originalText;
+                item.style.display = 'flex'; // Show all items when search is cleared
+
+                // Find the preceding date header
+                let header = item.previousElementSibling;
+                while (header && !header.classList.contains('date-header')) {
+                    header = header.previousElementSibling;
+                }
+
+                if (header && header.classList.contains('date-header')) {
+                    visibleHeaderMap[header.textContent] = true;
+                }
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+
+    // Show/hide date headers based on whether they have visible chats
+    dateHeaders.forEach(header => {
+        header.style.display = visibleHeaderMap[header.textContent] ? 'block' : 'none';
+    });
+
+    // Show a "no results" message if needed
+    let noResultsMsg = document.getElementById('no-search-results');
+
+    if (!hasMatches && searchTerm) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'no-search-results';
+            noResultsMsg.className = 'no-results-message';
+            noResultsMsg.textContent = 'No chats match your search';
+
+            const chatsSection = document.getElementById('chatsSection');
+            // Insert after the "Chats" header
+            const chatsHeader = chatsSection.querySelector('.chats-header');
+            if (chatsHeader && chatsHeader.nextSibling) {
+                chatsSection.insertBefore(noResultsMsg, chatsHeader.nextSibling);
+            } else {
+                chatsSection.appendChild(noResultsMsg);
+            }
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+
+    // Add visual indicator that search is active
+    const chatsSection = document.getElementById('chatsSection');
+    if (searchTerm) {
+        chatsSection.classList.add('search-active');
+    } else {
+        chatsSection.classList.remove('search-active');
+    }
+});
 
 // Clear the interval when the page is loaded
 window.addEventListener('load', () => {
