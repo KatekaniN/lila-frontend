@@ -627,7 +627,7 @@ img.delete-icon {
 
 /* Highlight matching text */
 .chat-title .highlight {
-    background-color: #f335ad;
+    background-color: #fafafa;
     border-radius: 2px;
     padding: 0 2px;
 }
