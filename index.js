@@ -51,6 +51,16 @@ async function getAuthToken() {
     return data.session?.access_token;
 }
 
+function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500); // Match this to your CSS transition time
+    }
+}
+
 
 // Load user's chats from Supabase
 async function loadUserChats() {
@@ -709,10 +719,81 @@ signOut.addEventListener('click', () => {
 });
 
 // Initialize the app
+
+// Modify your initApp function
 async function initApp() {
-    console.log("Initializing app...");
-    await checkAuth();
+    try {
+        console.log("Initializing app...");
+        // First check if backend is available
+        try {
+            const response = await fetch(`${API_URL}/health`, {
+                method: 'GET',
+                headers: { 'Cache-Control': 'no-cache' },
+                // Short timeout to prevent long waits
+                signal: AbortSignal.timeout(5000)
+            });
+
+            if (!response.ok) {
+                console.warn("Backend health check failed");
+            }
+        } catch (error) {
+            console.warn("Backend might be starting up:", error);
+            // Continue anyway, as it might just be waking up
+        }
+
+        // Check authentication
+        await checkAuth();
+
+        // Hide loading screen after everything is initialized
+        hideLoadingScreen();
+    } catch (error) {
+        console.error("Error during initialization:", error);
+        // Still hide loading screen even if there's an error
+        hideLoadingScreen();
+    }
 }
 
-// Start the app
-initApp();
+// Handle page visibility changes
+document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+        console.log("Page is now visible, checking auth status");
+        // Check auth status when page becomes visible again
+        checkAuth();
+    }
+});
+
+// Detect slow connections
+const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+if (connection && (connection.effectiveType === '2g' || connection.saveData)) {
+    console.log("Slow connection detected, optimizing loading");
+    document.querySelector('.loading-text').textContent = 'Loading... (Slow connection detected)';
+}
+
+// Add a progress indicator for slow connections
+let loadingProgress = 0;
+const progressInterval = setInterval(() => {
+    loadingProgress += 5;
+    if (loadingProgress > 95) {
+        clearInterval(progressInterval);
+    }
+    const loadingText = document.querySelector('.loading-text');
+    if (loadingText) {
+        loadingText.textContent = `Loading... ${loadingProgress}%`;
+    }
+}, 500);
+
+// Clear the interval when the page is loaded
+window.addEventListener('load', () => {
+    clearInterval(progressInterval);
+});
+
+// Don't hide loading screen immediately on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function () {
+    // Start the app initialization process
+    initApp();
+});
+
+// Add a timeout to ensure loading screen doesn't stay forever
+setTimeout(() => {
+    hideLoadingScreen();
+}, 10000); // 10 seconds max loading time

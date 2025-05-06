@@ -8,20 +8,68 @@ const supabaseUrl = 'https://enzpvlvwgolrpxxhmret.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuenB2bHZ3Z29scnB4eGhtcmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDM2MjksImV4cCI6MjA2MTg3OTYyOX0.tKIEOPlHJot-QT7j-AAkcmaHuWrmURBMULOz6ckxGHQ'; // Your public anon key (safe to expose)
 const supabase = createClient(supabaseUrl, supabaseKey); // Changed variable name to match usage
 
+// Check if user is logged in
 async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        console.log("Checking authentication...");
+        const { data: { user } } = await supabaseClient.auth.getUser();
 
-    if (user) {
-        window.location.href = 'index.html';
+        if (!user) {
+            console.log("No user found, redirecting to login");
+            if (!window.location.pathname.includes('login.html')) {
+                window.location.href = 'login.html';
+            }
+            return false;
+        }
+
+        currentUser = user;
+        console.log("User authenticated:", user.email);
+
+        if (window.location.pathname.includes('login.html')) {
+            window.location.href = 'index.html';
+            return true;
+        }
+
+        // Load user's chats from Supabase
+        await loadUserChats();
+        return true;
+    } catch (error) {
+        console.error("Authentication error:", error);
+        // Only redirect if we're not already on the login page
+        if (!window.location.pathname.includes('login.html')) {
+            window.location.href = 'login.html';
+        }
+        return false;
+    }
+}
+
+// Loading screen handling
+function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500); // Match this to your CSS transition time
     }
 }
 
 // Run auth check on page load
+// Modify your DOMContentLoaded event handler
 document.addEventListener('DOMContentLoaded', function () {
-    checkAuth();
+    // Check auth first
+    checkAuth().finally(() => {
+        // Set up event listeners
+        setupEventListeners();
 
-    // Set up event listeners only after DOM is loaded
-    setupEventListeners();
+        // Hide loading screen after auth check and event listeners are set up
+        hideLoadingScreen();
+    });
+
+    // Add a timeout to ensure loading screen doesn't stay forever
+    setTimeout(() => {
+        hideLoadingScreen();
+    }, 8000); // 8 seconds max loading time
 });
 
 // Function to set up all event listeners
@@ -187,6 +235,40 @@ function showSuccess(message) {
         authForm.insertBefore(successDiv, authForm.querySelector('button'));
     }
 }
+
+// Handle page visibility changes
+document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+        console.log("Page is now visible, checking auth status");
+        // Check auth status when page becomes visible again
+        checkAuth();
+    }
+});
+
+// Detect slow connections
+const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+if (connection && (connection.effectiveType === '2g' || connection.saveData)) {
+    console.log("Slow connection detected, optimizing loading");
+    document.querySelector('.loading-text').textContent = 'Loading... (Slow connection detected)';
+}
+
+// Add a progress indicator for slow connections
+let loadingProgress = 0;
+const progressInterval = setInterval(() => {
+    loadingProgress += 5;
+    if (loadingProgress > 95) {
+        clearInterval(progressInterval);
+    }
+    const loadingText = document.querySelector('.loading-text');
+    if (loadingText) {
+        loadingText.textContent = `Loading... ${loadingProgress}%`;
+    }
+}, 500);
+
+// Clear the interval when the page is loaded
+window.addEventListener('load', () => {
+    clearInterval(progressInterval);
+});
 
 // Test Supabase connection
 async function testSupabaseConnection() {
