@@ -648,15 +648,11 @@ img.delete-icon {
     opacity: 1;
 }
 
-/* Remove this rule that's causing the issue */
-/* .edit-icon {
-    margin-right: 40px;
-  } */
-
 .edit-icon,
 .delete-icon {
     width: 16px;
     height: 16px;
+    margin-right: 10px;
 }
 
 /* Update chat list item layout */
