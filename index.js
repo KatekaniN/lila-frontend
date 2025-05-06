@@ -4,6 +4,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const API_URL = 'https://lila-backend.onrender.com/api';
 
 const supabaseUrl = 'https://enzpvlvwgolrpxxhmret.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuenB2bHZ3Z29scnB4eGhtcmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDM2MjksImV4cCI6MjA2MTg3OTYyOX0.tKIEOPlHJot-QT7j-AAkcmaHuWrmURBMULOz6ckxGHQ'; // Your public anon key (safe to expose)
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
 
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
