@@ -1,5 +1,5 @@
 :root {
-    --primary-pink: #f335ad;
+    --primary-pink: #fba0b7;
     --dark-bg: #0f0f0f;
     --sidebar-bg: #1a1a1a;
     --text-light: #ffffff;
@@ -87,7 +87,7 @@ body {
     margin: 15px;
     position: relative;
     align-items: center;
-    border: 1px solid #f335ad;
+    border: 1px solid var(--primary-pink);
     border-radius: 50px;
     padding: 0 5px;
 }
@@ -112,7 +112,7 @@ body {
     font-size: 12px;
     padding: 5px 10px;
     border-radius: 50px;
-    background-color: #f335ad;
+    background-color: var(--primary-pink);
     color: var(--text-light);
     border: none;
     display: flex;
@@ -167,7 +167,7 @@ body {
 }
 
 .new-chat-btn:hover {
-    background-color: lighten(#f335ad, 10%);
+    background-color: lighten(var(--primary-pink), 10%);
 }
 
 .home-icon {
@@ -245,13 +245,13 @@ body {
 }
 
 img.sign-out {
-    color: #f335ad;
+    color: var(--primary-pink);
     max-width: 20px;
     max-height: 20px;
 }
 
 .sign-out {
-    color: #f335ad
+    color: var(--primary-pink)
 }
 
 /* Main Chat Area */
@@ -281,7 +281,7 @@ img.sign-out {
 .chat-name {
     font-family: 'Cinzel', serif;
     font-size: 20px;
-    color: #f335ad;
+    color: var(--primary-pink);
     font-weight: 500;
 }
 
@@ -458,7 +458,7 @@ img.sign-out {
     overflow: hidden;
     text-overflow: ellipsis;
     flex-grow: 1;
-    color: #f335ad;
+    color: var(--primary-pink);
 }
 
 img.delete-icon {
@@ -494,7 +494,7 @@ img.delete-icon {
     font-family: 'Cinzel', serif;
     font-size: 3rem;
     font-weight: 700;
-    color: #f335ad;
+    color: var(--primary-pink);
     margin-bottom: 2rem;
     letter-spacing: 2px;
 }
@@ -508,7 +508,7 @@ img.delete-icon {
 .spinner>div {
     width: 18px;
     height: 18px;
-    background-color: #f335ad;
+    background-color: var(--primary-pink);
     border-radius: 100%;
     display: inline-block;
     animation: sk-bouncedelay 1.4s infinite ease-in-out both;
@@ -524,7 +524,7 @@ img.delete-icon {
 }
 
 .loading-text {
-    color: #f335ad;
+    color: var(--primary-pink);
     font-family: 'Nunito', sans-serif;
     font-size: 1rem;
     margin-top: 1rem;
@@ -549,7 +549,7 @@ img.delete-icon {
     display: block;
     padding: 8px 15px;
     font-size: 0.8rem;
-    color: #f335ad;
+    color: var(--primary-pink);
     font-weight: 500;
 }
 
@@ -557,7 +557,7 @@ img.delete-icon {
 
 /* Style for the search input when active */
 #searchInput:focus {
-    border-color: #f335ad;
+    border-color: var(--primary-pink);
     box-shadow: 0 0 0 2px rgba(243, 53, 173, 0.2);
 }
 
@@ -640,7 +640,6 @@ img.delete-icon {
     justify-content: center;
     opacity: 0.7;
     transition: opacity 0.2s;
-    /* Remove margin-right from here */
 }
 
 .chat-edit-btn:hover,
