@@ -455,10 +455,25 @@ async function createNewChat() {
 
 function getThinkingMessage() {
     const messages = [
-        "Thinking...",
-        "Let me think...",
-        "Hmm...",
-        "Considering that..."
+        "Ag, that's an interesting one...",
+        "Yebo, I'm processing that...",
+        "Shap shap, gathering my thoughts...",
+        "Just now, I'll have something for you...",
+        "Hmm, let me tap into my Jozi wisdom...",
+        "Connecting to my Cape Town creative vibes...",
+        "Lekker question! Let me ponder...",
+        "Digging into my South African soul for this one...",
+        "Hayi, that's got me thinking...",
+        "Ubuntu wisdom loading...",
+        "Brewing some thoughts like a proper rooibos...",
+        "Vibing with that question...",
+        "Eish, that's deep! Thinking...",
+        "Connecting to my digital soul...",
+        "Channeling my inner creative...",
+        "Aweh, let me explore that...",
+        "Ja, I'm on it...",
+        "Cooking up something lekker for you...",
+        "Searching my Mzansi memories..."
     ];
     return messages[Math.floor(Math.random() * messages.length)];
 }
