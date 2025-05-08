@@ -774,7 +774,7 @@ const sendMessageToGemini = async (message, chatId) => {
         typewriterText.className = 'typewriter';
         typewriterText.textContent = getThinkingMessage();
 
-        typingIndicator.appendChild(avatar);
+        //typingIndicator.appendChild(avatar);
         typingIndicator.appendChild(typewriterText);
 
         // Add to chat messages
