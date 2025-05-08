@@ -452,11 +452,10 @@ async function createNewChat() {
         return null;
     }
 }
-// Function to get a random thinking message
+
 function getThinkingMessage() {
     const messages = [
         "Thinking...",
-        "Processing...",
         "Let me think...",
         "Hmm...",
         "Considering that..."
@@ -761,8 +760,7 @@ function formatAIResponse(text) {
     }).join('');
 }
 
-// Function to send message to Gemini API
-// Function to send message to API
+
 const sendMessageToGemini = async (message, chatId) => {
     try {
         // Create and show typing indicator with typewriter effect
@@ -773,6 +771,7 @@ const sendMessageToGemini = async (message, chatId) => {
         const typewriterText = document.createElement('div');
         typewriterText.className = 'typewriter';
         typewriterText.textContent = getThinkingMessage();
+        typewriterText.color = '#fba0b7'
 
         //typingIndicator.appendChild(avatar);
         typingIndicator.appendChild(typewriterText);
