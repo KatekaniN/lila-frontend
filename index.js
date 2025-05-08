@@ -770,11 +770,6 @@ const sendMessageToGemini = async (message, chatId) => {
         typingIndicator.id = 'typingIndicator';
         typingIndicator.className = 'typing';
 
-        const avatar = document.createElement('img');
-        avatar.src = './images/lila-avatar.jpg';
-        avatar.alt = 'AI';
-        avatar.className = 'message-avatar';
-
         const typewriterText = document.createElement('div');
         typewriterText.className = 'typewriter';
         typewriterText.textContent = getThinkingMessage();
