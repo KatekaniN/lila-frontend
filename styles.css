@@ -22,11 +22,34 @@ body {
     overflow: hidden;
 }
 
+/* Add this to your CSS file */
 .typing {
     display: none;
-    display: flex;
+    /* Hide by default */
+    position: relative;
+    /* Change from absolute to relative */
     align-items: center;
     margin: 10px;
+    max-width: 70%;
+    padding: 12px 16px 12px 50px;
+    /* Add left padding for avatar */
+    border-radius: 20px;
+    border-bottom-left-radius: 4px;
+    background-color: var(--primary-pink);
+    align-self: flex-start;
+}
+
+.typing .message-avatar {
+    position: absolute;
+    left: -40px;
+    bottom: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+#chatMessages {
+    position: relative;
 }
 
 .typing span {
