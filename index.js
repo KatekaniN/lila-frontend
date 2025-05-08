@@ -13,6 +13,7 @@ const clearSearchBtn = document.getElementById('clearSearch');
 const sendBtn = document.getElementById('sendBtn');
 const chatMessages = document.getElementById('chatMessages');
 const newChatBtn = document.getElementById('newChatBtn');
+const typingIndicator = document.getElementById('typingIndicator');
 const chatItems = document.querySelectorAll('.chat-list-item');
 const searchInput = document.getElementById('searchInput');
 const deleteChat = document.getElementById('deleteChat');
@@ -208,6 +209,7 @@ function groupChatsByDate(chats) {
     return groups;
 }
 
+
 // Create a chat list item element with delete and edit buttons
 function createChatListItem(chat) {
     // Create the main container
@@ -239,7 +241,7 @@ function createChatListItem(chat) {
 
     // Add edit functionality
     editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevent chat selection when clicking edit
         startEditingChatName(chat.id, chatTitle);
     });
 
@@ -385,12 +387,11 @@ async function saveChatName(chatId, newName) {
         // You could show an error message to the user here
     }
 }
-
 // Create a new chat
 async function createNewChat() {
     try {
         console.log("Creating new chat for user:", currentUser.id);
-    
+
         // Create new chat in Supabase
         const token = await getAuthToken();
         const response = await fetch(`${API_URL}/chats`, {
@@ -400,29 +401,29 @@ async function createNewChat() {
                 'Authorization': `Bearer ${token}`
             }
         });
-    
+
         if (!response.ok) {
             throw new Error('Failed to create chat');
         }
-    
+
         const newChat = await response.json();
         currentChatId = newChat.id;
-    
+
         // Add to local array
         userChats.unshift(newChat);
-    
+
         // Add to UI
         const chatsSection = document.getElementById('chatsSection');
-    
+
         // Find or create "Today" header
         let todayHeader = Array.from(chatsSection.querySelectorAll('.date-header'))
             .find(header => header.textContent === 'Today');
-    
+
         if (!todayHeader) {
             todayHeader = document.createElement('div');
             todayHeader.classList.add('date-header');
             todayHeader.textContent = 'Today';
-    
+
             // Insert after the "Chats" header
             const chatsHeader = chatsSection.querySelector('.chats-header');
             if (chatsHeader) {
@@ -431,49 +432,27 @@ async function createNewChat() {
                 chatsSection.appendChild(todayHeader);
             }
         }
-    
+
         const chatItem = createChatListItem(newChat);
-    
+
         // Insert after the "Today" header
         chatsSection.insertBefore(chatItem, todayHeader.nextSibling);
-    
+
         // Activate the new chat
         document.querySelectorAll('.chat-list-item').forEach(i => i.classList.remove('active'));
         chatItem.classList.add('active');
-    
-        // Clear messages and add typing indicator
+
+        // Clear messages
         chatMessages.innerHTML = '';
-        
-        // Create typing indicator but keep it hidden
-        const typingIndicator = document.createElement('div');
-        typingIndicator.id = 'typingIndicator';
-        typingIndicator.className = 'typing';
-        typingIndicator.style.display = 'none';
-        
-        const avatar = document.createElement('img');
-        avatar.src = './images/lila-avatar.jpg';
-        avatar.alt = 'AI';
-        avatar.className = 'message-avatar';
-        
-        const dot1 = document.createElement('span');
-        const dot2 = document.createElement('span');
-        const dot3 = document.createElement('span');
-        
-        typingIndicator.appendChild(avatar);
-        typingIndicator.appendChild(dot1);
-        typingIndicator.appendChild(dot2);
-        typingIndicator.appendChild(dot3);
-        
         chatMessages.appendChild(typingIndicator);
-    
+
         console.log("New chat UI updated");
         return newChat;
     } catch (error) {
         console.error('Error creating new chat:', error);
         return null;
     }
-    }
-
+}
 // Delete a chat by ID
 async function deleteChatById(chatId) {
     try {
@@ -675,45 +654,24 @@ async function saveChatHistory(chatId, history) {
 
 // Function to display messages in the UI
 const displayMessages = async (chatId) => {
-    // Clear all messages
     chatMessages.innerHTML = '';
 
-    // Get chat history
+    // Make sure typingIndicator is added to the chatMessages first
+    chatMessages.appendChild(typingIndicator);
+    typingIndicator.style.display = 'none';
+
     const history = await getChatHistory(chatId);
 
-    // Add messages to UI
     history.forEach(message => {
         if (message.role === "user" || message.role === "model") {
             addMessageToUI(message.parts[0].text, message.role === "user");
         }
     });
 
-    // Create typing indicator but keep it hidden
-    const typingIndicator = document.createElement('div');
-    typingIndicator.id = 'typingIndicator';
-    typingIndicator.className = 'typing';
-    typingIndicator.style.display = 'none';
-
-    const avatar = document.createElement('img');
-    avatar.src = './images/lila-avatar.jpg';
-    avatar.alt = 'AI';
-    avatar.className = 'message-avatar';
-
-    const dot1 = document.createElement('span');
-    const dot2 = document.createElement('span');
-    const dot3 = document.createElement('span');
-
-    typingIndicator.appendChild(avatar);
-    typingIndicator.appendChild(dot1);
-    typingIndicator.appendChild(dot2);
-    typingIndicator.appendChild(dot3);
-
-    chatMessages.appendChild(typingIndicator);
-
-    // Scroll to bottom
     chatMessages.scrollTop = chatMessages.scrollHeight;
 };
 
+// Function to add a message to the UI
 // Function to add a message to the UI with improved formatting
 const addMessageToUI = (text, isUser = true) => {
     const messageDiv = document.createElement('div');
@@ -740,6 +698,7 @@ const addMessageToUI = (text, isUser = true) => {
         messageDiv.appendChild(document.createTextNode(text));
     }
 
+    // Only insert before typingIndicator if it's still in the DOM
     if (chatMessages.contains(typingIndicator)) {
         chatMessages.insertBefore(messageDiv, typingIndicator);
     } else {
@@ -791,35 +750,9 @@ function formatAIResponse(text) {
     }).join('');
 }
 
+// Function to send message to Gemini API
 const sendMessageToGemini = async (message, chatId) => {
     try {
-        // Create and show typing indicator
-        if (!document.getElementById('typingIndicator')) {
-            const typingIndicator = document.createElement('div');
-            typingIndicator.id = 'typingIndicator';
-            typingIndicator.className = 'typing';
-
-            const avatar = document.createElement('img');
-            avatar.src = './images/lila-avatar.jpg';
-            avatar.alt = 'AI';
-            avatar.className = 'message-avatar';
-
-            const dot1 = document.createElement('span');
-            const dot2 = document.createElement('span');
-            const dot3 = document.createElement('span');
-
-            typingIndicator.appendChild(avatar);
-            typingIndicator.appendChild(dot1);
-            typingIndicator.appendChild(dot2);
-            typingIndicator.appendChild(dot3);
-
-            chatMessages.appendChild(typingIndicator);
-        }
-
-        typingIndicator.style.display = 'flex';
-
-        // Scroll to bottom to show typing indicator
-        chatMessages.scrollTop = chatMessages.scrollHeight;
 
         // Get chat history
         const chatHistory = await getChatHistory(chatId);
@@ -832,7 +765,6 @@ const sendMessageToGemini = async (message, chatId) => {
 
         // Save updated history
         await saveChatHistory(chatId, chatHistory);
-
         // Call backend API
         const token = await getAuthToken();
         const response = await fetch(`${API_URL}/generate`, {
@@ -855,6 +787,7 @@ const sendMessageToGemini = async (message, chatId) => {
         const data = await response.json();
         const responseText = data.response;
 
+
         // Add AI response to history
         chatHistory.push({
             role: "model",
@@ -865,21 +798,17 @@ const sendMessageToGemini = async (message, chatId) => {
         await saveChatHistory(chatId, chatHistory);
 
         // Hide typing indicator
-        if (typingIndicator) {
-            typingIndicator.style.display = 'none';
-        }
+        typingIndicator.style.display = 'none';
 
         // Display AI response
         addMessageToUI(responseText, false);
 
         return responseText;
     } catch (error) {
-        console.error("Error calling API:", error);
+        console.error("Error calling Gemini API:", error);
 
-        const typingIndicator = document.getElementById('typingIndicator');
-        if (typingIndicator) {
-            typingIndicator.style.display = 'none';
-        }
+        // Hide typing indicator
+        typingIndicator.style.display = 'none';
 
         // Show error message
         addMessageToUI("Eish! Sorry, I'm having trouble connecting right now. Can you try again later?", false);
