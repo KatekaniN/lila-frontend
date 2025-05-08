@@ -387,7 +387,7 @@ async function saveChatName(chatId, newName) {
         // You could show an error message to the user here
     }
 }
-// Create a new chat
+
 async function createNewChat() {
     try {
         console.log("Creating new chat for user:", currentUser.id);
@@ -444,7 +444,6 @@ async function createNewChat() {
 
         // Clear messages
         chatMessages.innerHTML = '';
-        chatMessages.appendChild(typingIndicator);
 
         console.log("New chat UI updated");
         return newChat;
@@ -453,6 +452,18 @@ async function createNewChat() {
         return null;
     }
 }
+// Function to get a random thinking message
+function getThinkingMessage() {
+    const messages = [
+        "Thinking...",
+        "Processing...",
+        "Let me think...",
+        "Hmm...",
+        "Considering that..."
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+}
+
 // Delete a chat by ID
 async function deleteChatById(chatId) {
     try {
@@ -654,20 +665,20 @@ async function saveChatHistory(chatId, history) {
 
 // Function to display messages in the UI
 const displayMessages = async (chatId) => {
+    // Clear all messages
     chatMessages.innerHTML = '';
 
-    // Make sure typingIndicator is added to the chatMessages first
-    chatMessages.appendChild(typingIndicator);
-    typingIndicator.style.display = 'none';
-
+    // Get chat history
     const history = await getChatHistory(chatId);
 
+    // Add messages to UI
     history.forEach(message => {
         if (message.role === "user" || message.role === "model") {
             addMessageToUI(message.parts[0].text, message.role === "user");
         }
     });
 
+    // Scroll to bottom
     chatMessages.scrollTop = chatMessages.scrollHeight;
 };
 
@@ -751,8 +762,32 @@ function formatAIResponse(text) {
 }
 
 // Function to send message to Gemini API
+// Function to send message to API
 const sendMessageToGemini = async (message, chatId) => {
     try {
+        // Create and show typing indicator with typewriter effect
+        const typingIndicator = document.createElement('div');
+        typingIndicator.id = 'typingIndicator';
+        typingIndicator.className = 'typing';
+
+        const avatar = document.createElement('img');
+        avatar.src = './images/lila-avatar.jpg';
+        avatar.alt = 'AI';
+        avatar.className = 'message-avatar';
+
+        const typewriterText = document.createElement('div');
+        typewriterText.className = 'typewriter';
+        typewriterText.textContent = getThinkingMessage();
+
+        typingIndicator.appendChild(avatar);
+        typingIndicator.appendChild(typewriterText);
+
+        // Add to chat messages
+        chatMessages.appendChild(typingIndicator);
+        typingIndicator.style.display = 'block';
+
+        // Scroll to bottom to show typing indicator
+        chatMessages.scrollTop = chatMessages.scrollHeight;
 
         // Get chat history
         const chatHistory = await getChatHistory(chatId);
@@ -765,6 +800,7 @@ const sendMessageToGemini = async (message, chatId) => {
 
         // Save updated history
         await saveChatHistory(chatId, chatHistory);
+
         // Call backend API
         const token = await getAuthToken();
         const response = await fetch(`${API_URL}/generate`, {
@@ -787,7 +823,6 @@ const sendMessageToGemini = async (message, chatId) => {
         const data = await response.json();
         const responseText = data.response;
 
-
         // Add AI response to history
         chatHistory.push({
             role: "model",
@@ -797,18 +832,23 @@ const sendMessageToGemini = async (message, chatId) => {
         // Save updated history with AI response
         await saveChatHistory(chatId, chatHistory);
 
-        // Hide typing indicator
-        typingIndicator.style.display = 'none';
+        // Remove typing indicator
+        if (typingIndicator && typingIndicator.parentNode) {
+            typingIndicator.parentNode.removeChild(typingIndicator);
+        }
 
         // Display AI response
         addMessageToUI(responseText, false);
 
         return responseText;
     } catch (error) {
-        console.error("Error calling Gemini API:", error);
+        console.error("Error calling API:", error);
 
-        // Hide typing indicator
-        typingIndicator.style.display = 'none';
+        // Remove typing indicator
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator && typingIndicator.parentNode) {
+            typingIndicator.parentNode.removeChild(typingIndicator);
+        }
 
         // Show error message
         addMessageToUI("Eish! Sorry, I'm having trouble connecting right now. Can you try again later?", false);
