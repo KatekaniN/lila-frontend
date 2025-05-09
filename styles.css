@@ -266,14 +266,15 @@ img.sign-out {
 .chat-header {
     padding: 15px 20px;
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: center;
     gap: 10px;
     border-bottom: 1px solid var(--border-color);
 }
 
 .chat-header p {
-    font-size: 16px;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12px;
     color: #fba0b7;
 }
 
