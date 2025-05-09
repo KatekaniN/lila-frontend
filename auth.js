@@ -12,7 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseKey); // Changed variable nam
 async function checkAuth() {
     try {
         console.log("Checking authentication...");
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
             console.log("No user found, redirecting to login");
