@@ -129,7 +129,7 @@
 }
 
 .auth-btn:hover {
-    background-color: #d92c96;
+    background-color: #fba0b7;
 }
 
 .auth-divider {
@@ -196,7 +196,7 @@
 
 /* Error message styling */
 .error-message {
-    color: #ff4d4f;
+    color: #f335ad;
     font-size: 14px;
     margin-top: 5px;
 }
