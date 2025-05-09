@@ -7,6 +7,7 @@
     --border-color: #292929;
 }
 
+/* Reset and General Styles (No changes here) */
 * {
     margin: 0;
     padding: 0;
@@ -58,7 +59,7 @@ body {
     }
 }
 
-/* Sidebar Styles */
+/* Sidebar Styles (No changes here) */
 #app-content>.sidebar {
     width: 300px;
     background-color: var(--sidebar-bg);
@@ -158,7 +159,7 @@ body {
 }
 
 /* Add some spacing between paragraphs */
-.message.ai .formatted-content>*:first-child {
+.message.ai .formatted-content>:first-child {
     margin-top: 0;
 }
 
@@ -286,7 +287,8 @@ img.sign-out {
 }
 
 .chat-messages {
-    background-image: url('./images/lila-bg.png');
+    /* remove background image */
+    background-image: none;
     flex: 1;
     overflow-y: auto;
     padding: 20px;
@@ -334,6 +336,7 @@ img.sign-out {
     display: none;
 }
 
+/* Chat Input Area - UPDATED */
 .chat-input-container {
     padding: 20px;
     position: relative;
@@ -478,7 +481,8 @@ img.delete-icon {
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+    transition: opacity 0.5s ease-out,
+        visibility 0.5s ease-out;
 }
 
 #loading-screen.hidden {
@@ -543,7 +547,6 @@ img.delete-icon {
     }
 }
 
-
 .search-active::before {
     content: "Search results";
     display: block;
@@ -552,8 +555,6 @@ img.delete-icon {
     color: var(--primary-pink);
     font-weight: 500;
 }
-
-
 
 /* Style for the search input when active */
 #searchInput:focus {
@@ -589,7 +590,6 @@ img.delete-icon {
 .search-active {
     position: relative;
 }
-
 
 .no-results-message {
     padding: 15px;
