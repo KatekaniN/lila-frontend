@@ -266,16 +266,21 @@ img.sign-out {
 .chat-header {
     padding: 15px 20px;
     display: flex;
+    flex-direction: column-reverse;
     align-items: center;
     gap: 10px;
     border-bottom: 1px solid var(--border-color);
+}
+
+.chat-header p {
+    font-size: 16px;
+    color: #fba0b7;
 }
 
 .profile-pic {
     width: 72px;
     height: 72px;
     margin: 0 auto;
-    ;
     border-radius: 50%;
     object-fit: cover;
 }
