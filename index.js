@@ -735,33 +735,33 @@ const addMessageToUI = (text, isUser = true) => {
 
 // Helper function to format AI responses
 function formatAIResponse(text) {
-    // Replace multiple newlines with proper paragraph breaks
-    let formatted = text.replace(/\n{3,}/g, '\n\n');
+    // Handle markdown-style formatting
+    let formatted = text;
 
-    // Split by newlines and process each paragraph
+    // Handle bold text (both ** and __ formats)
+    formatted = formatted.replace(/\*\*(.*?)\*\*|__(.*?)__/g, (match, g1, g2) => {
+        const content = g1 || g2;
+        return `<strong>${content}</strong>`;
+    });
+
+    // Handle italic text (both * and _ formats)
+    formatted = formatted.replace(/\*(.*?)\*|_(.*?)_/g, (match, g1, g2) => {
+        // Skip if it's part of a bold pattern we already handled
+        if (match.startsWith('**') || match.startsWith('__')) return match;
+        const content = g1 || g2;
+        return `<em>${content}</em>`;
+    });
+
+    // Replace multiple newlines with proper paragraph breaks
+    formatted = formatted.replace(/\n{3,}/g, '\n\n');
+
+    // Split by double newlines (paragraph breaks)
     const paragraphs = formatted.split('\n\n');
 
     // Process each paragraph
     return paragraphs.map(paragraph => {
         // Skip empty paragraphs
         if (!paragraph.trim()) return '';
-
-        // Check if it's a list item
-        if (/^[*\-•]/.test(paragraph.trim())) {
-            // It's likely a list, preserve the formatting
-            const listItems = paragraph.split('\n').map(item => {
-                return `<li>${item.replace(/^[*\-•]\s*/, '')}</li>`;
-            }).join('');
-            return `<ul>${listItems}</ul>`;
-        }
-
-        // Check if it's a numbered list
-        if (/^\d+[.)]/.test(paragraph.trim())) {
-            const listItems = paragraph.split('\n').map(item => {
-                return `<li>${item.replace(/^\d+[.)]\s*/, '')}</li>`;
-            }).join('');
-            return `<ol>${listItems}</ol>`;
-        }
 
         // Check if it's a heading (starts with # or ##)
         if (/^#{1,3}\s/.test(paragraph.trim())) {
@@ -770,7 +770,89 @@ function formatAIResponse(text) {
             return `<h${level + 2}>${headingText}</h${level + 2}>`;
         }
 
-        // Regular paragraph
+        // Check if the paragraph contains bullet points
+        if (paragraph.includes('\n* ') || paragraph.includes('\n- ') || paragraph.includes('\n• ') ||
+            paragraph.trim().startsWith('* ') || paragraph.trim().startsWith('- ') || paragraph.trim().startsWith('• ')) {
+
+            // Split into lines and process each line
+            const lines = paragraph.split('\n');
+            let inList = false;
+            let html = '';
+
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                // Check if this line is a list item
+                if (trimmedLine.startsWith('* ') || trimmedLine.startsWith('- ') || trimmedLine.startsWith('• ')) {
+                    // Start list if not already in one
+                    if (!inList) {
+                        html += '<ul>';
+                        inList = true;
+                    }
+                    // Add list item
+                    const itemContent = trimmedLine.replace(/^[*\-•]\s+/, '');
+                    html += `<li>${itemContent}</li>`;
+                } else {
+                    // End list if we were in one
+                    if (inList) {
+                        html += '</ul>';
+                        inList = false;
+                    }
+                    // Add regular text
+                    if (trimmedLine) {
+                        html += `<p>${trimmedLine}</p>`;
+                    }
+                }
+            });
+
+            // Close list if still open
+            if (inList) {
+                html += '</ul>';
+            }
+
+            return html;
+        }
+
+        // Check if it's a numbered list
+        if (/^\d+[.)]/.test(paragraph.trim()) || paragraph.includes('\n1. ')) {
+            // Split into lines and process each line
+            const lines = paragraph.split('\n');
+            let inList = false;
+            let html = '';
+
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                // Check if this line is a numbered list item
+                if (/^\d+[.)]/.test(trimmedLine)) {
+                    // Start list if not already in one
+                    if (!inList) {
+                        html += '<ol>';
+                        inList = true;
+                    }
+                    // Add list item
+                    const itemContent = trimmedLine.replace(/^\d+[.)]\s+/, '');
+                    html += `<li>${itemContent}</li>`;
+                } else {
+                    // End list if we were in one
+                    if (inList) {
+                        html += '</ol>';
+                        inList = false;
+                    }
+                    // Add regular text
+                    if (trimmedLine) {
+                        html += `<p>${trimmedLine}</p>`;
+                    }
+                }
+            });
+
+            // Close list if still open
+            if (inList) {
+                html += '</ol>';
+            }
+
+            return html;
+        }
+
+        // Regular paragraph with line breaks
         return `<p>${paragraph.replace(/\n/g, '<br>')}</p>`;
     }).join('');
 }
