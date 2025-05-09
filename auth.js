@@ -8,15 +8,24 @@ const supabaseUrl = 'https://enzpvlvwgolrpxxhmret.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuenB2bHZ3Z29scnB4eGhtcmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDM2MjksImV4cCI6MjA2MTg3OTYyOX0.tKIEOPlHJot-QT7j-AAkcmaHuWrmURBMULOz6ckxGHQ'; // Your public anon key (safe to expose)
 const supabase = createClient(supabaseUrl, supabaseKey); // Changed variable name to match usage
 
-// Check if user is logged in
 async function checkAuth() {
     try {
         console.log("Checking authentication...");
         const { data: { user } } = await supabase.auth.getUser();
 
+        // Define public pages that don't require authentication
+        const publicPages = ['login.html', 'signup.html', 'forgot-password.html', 'reset-password.html'];
+
+        // Check if current page is a public page
+        const currentPath = window.location.pathname;
+        const isPublicPage = publicPages.some(page => currentPath.includes(page));
+
         if (!user) {
-            console.log("No user found, redirecting to login");
-            if (!window.location.pathname.includes('login.html')) {
+            console.log("No user found");
+
+            // Only redirect to login if not on a public page
+            if (!isPublicPage) {
+                console.log("Redirecting to login");
                 window.location.href = 'login.html';
             }
             return false;
@@ -25,18 +34,30 @@ async function checkAuth() {
         currentUser = user;
         console.log("User authenticated:", user.email);
 
-        if (window.location.pathname.includes('login.html')) {
+        // If authenticated and on login page, redirect to index
+        if (currentPath.includes('login.html')) {
             window.location.href = 'index.html';
             return true;
         }
 
-        // Load user's chats from Supabase
-        await loadUserChats();
+        // Load user's chats from Supabase (only if on a page that needs it)
+        if (!isPublicPage) {
+            await loadUserChats();
+        }
+
         return true;
     } catch (error) {
         console.error("Authentication error:", error);
-        // Only redirect if we're not already on the login page
-        if (!window.location.pathname.includes('login.html')) {
+
+        // Define public pages that don't require authentication
+        const publicPages = ['login.html', 'signup.html', 'forgot-password.html', 'reset-password.html'];
+
+        // Check if current page is a public page
+        const currentPath = window.location.pathname;
+        const isPublicPage = publicPages.some(page => currentPath.includes(page));
+
+        // Only redirect if we're not already on a public page
+        if (!isPublicPage) {
             window.location.href = 'login.html';
         }
         return false;
