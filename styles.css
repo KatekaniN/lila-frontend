@@ -83,28 +83,23 @@ body {
     font-weight: 500;
     color: #fba0b7;
     font-weight: bold;
-    /* Add some spacing between the text and the logo */
 }
 
 .sidebar-header img {
     width: 30px;
-    /* Adjust the width as needed */
     height: auto;
-    /* Maintain aspect ratio */
     display: block;
-    /* Remove any extra spacing below the image */
+
 }
 
-/* Adjustments for responsiveness (optional) */
-@media (max-width: 768px) {
-    .sidebar-header .logo {
-        font-size: 20px;
-    }
-
-    .sidebar-header img {
-        width: 25px;
-    }
+.sidebar-header .logo {
+    font-size: 20px;
 }
+
+.sidebar-header img {
+    width: 25px;
+}
+
 
 .search-bar {
     display: flex;
