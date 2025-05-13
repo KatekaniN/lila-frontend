@@ -70,6 +70,10 @@ body {
 
 .sidebar-header {
     padding: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -78,6 +82,7 @@ body {
     font-size: 32px;
     text-align: left;
     font-weight: 500;
+    color: #fba0b7;
 }
 
 .search-bar {
