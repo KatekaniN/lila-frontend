@@ -1,5 +1,4 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-//import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
 const API_URL = 'https://lila-backend.onrender.com/api';
 
@@ -7,25 +6,16 @@ const supabaseUrl = 'https://enzpvlvwgolrpxxhmret.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuenB2bHZ3Z29scnB4eGhtcmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDM2MjksImV4cCI6MjA2MTg3OTYyOX0.tKIEOPlHJot-QT7j-AAkcmaHuWrmURBMULOz6ckxGHQ'; // Your public anon key (safe to expose)
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-
 const chatInput = document.getElementById('chatInput');
-const clearSearchBtn = document.getElementById('clearSearch');
 const sendBtn = document.getElementById('sendBtn');
 const chatMessages = document.getElementById('chatMessages');
-const newChatBtn = document.getElementById('newChatBtn');
 const typingIndicator = document.getElementById('typingIndicator');
-const chatItems = document.querySelectorAll('.chat-list-item');
-const searchInput = document.getElementById('searchInput');
-const deleteChat = document.getElementById('deleteChat');
 const backToHome = document.getElementById('backToHome');
-//const contactUs = document.getElementById('contactUs');
 const signOut = document.getElementById('signOut');
 
-let currentChatId = 'default';
+let currentChatId = 'default'; // Fixed chat ID
 let currentUser = null;
-let userChats = [];
-
-
+let chatHistory = []; // Store chat history locally
 
 // Check if user is logged in
 async function checkAuth() {
@@ -41,8 +31,8 @@ async function checkAuth() {
         currentUser = user;
         console.log("User authenticated:", user.email);
 
-        // Load user's chats from Supabase
-        await loadUserChats();
+        // Load the single chat
+        await loadChat();
     } catch (error) {
         console.error("Authentication error:", error);
         window.location.href = 'login.html';
@@ -83,323 +73,50 @@ function hideLoadingScreen() {
         }, 200); // Small delay before starting app content fade-in
     }
 }
-async function loadUserChats() {
+
+async function loadChat() {
     try {
-        console.log("Loading chats for user:", currentUser.id);
+        // Load chat history from backend API
         const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/chats`, {
+        const response = await fetch(`${API_URL}/chats/default`, { // Assuming 'default' is your fixed chat ID
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
 
         if (!response.ok) {
-            throw new Error('Failed to fetch chats');
+            // If the chat doesn't exist, create it
+            if (response.status === 404) {
+                await createDefaultChat();
+                return;
+            }
+            throw new Error('Failed to fetch chat');
         }
 
         const data = await response.json();
-        userChats = data || [];
-
-        console.log("Loaded chats:", userChats.length);
-
-        // Get the chats section
-        const chatsSection = document.getElementById('chatsSection');
-
-        // Clear everything except the chats header
-        chatsSection.innerHTML = '';
-
-        // Re-add the chats header
-        const chatsHeader = document.createElement('div');
-        chatsHeader.classList.add('chats-header');
-        chatsHeader.textContent = 'Chats';
-        chatsSection.appendChild(chatsHeader);
-
-        // Group chats by date
-        const chatsByDate = groupChatsByDate(userChats);
-
-        // Add chats to sidebar
-        let firstDateHeader = null;
-
-        Object.keys(chatsByDate).forEach(date => {
-            // Create date header
-            const dateHeader = document.createElement('div');
-            dateHeader.classList.add('date-header');
-            dateHeader.textContent = date;
-
-            if (!firstDateHeader) {
-                firstDateHeader = dateHeader;
-            }
-
-            chatsSection.appendChild(dateHeader);
-
-            // Add chat items for this date
-            chatsByDate[date].forEach(chat => {
-                const chatItem = createChatListItem(chat);
-                chatsSection.appendChild(chatItem);
-            });
-        });
-
-        // If there are chats, select the first one
-        if (userChats.length > 0) {
-            currentChatId = userChats[0].id;
-            displayMessages(currentChatId);
-
-            // Highlight the first chat
-            const firstChatItem = document.querySelector('.chat-list-item');
-            if (firstChatItem) {
-                firstChatItem.classList.add('active');
-            }
-        } else {
-            // Create a new chat if no chats exist
-            console.log("No chats found, creating a new one");
-            createNewChat();
-        }
+        chatHistory = data.messages || []; // Load messages into local history
+        displayMessages(); // Display the loaded messages
     } catch (error) {
-        console.error('Error loading chats:', error);
-    }
-}
-clearSearchBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    clearSearchBtn.style.display = 'none';
-
-    // Trigger the input event to update the search results
-    searchInput.dispatchEvent(new Event('input'));
-
-    // Focus back on the search input
-    searchInput.focus();
-});
-
-// Group chats by date
-function groupChatsByDate(chats) {
-    const groups = {};
-
-    chats.forEach(chat => {
-        const date = new Date(chat.updated_at);
-        let dateLabel;
-
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        const isToday = date.toDateString() === today.toDateString();
-        const isYesterday = date.toDateString() === yesterday.toDateString();
-
-        if (isToday) {
-            dateLabel = 'Today';
-        } else if (isYesterday) {
-            dateLabel = 'Yesterday';
-        } else {
-            // Check if within last 7 days
-            const daysDiff = Math.floor((today - date) / (1000 * 60 * 60 * 24));
-            if (daysDiff < 7) {
-                dateLabel = '7 days ago';
-            } else {
-                // Format as month and day
-                dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }
-        }
-
-        if (!groups[dateLabel]) {
-            groups[dateLabel] = [];
-        }
-
-        groups[dateLabel].push(chat);
-    });
-
-    return groups;
-}
-
-
-// Create a chat list item element with delete and edit buttons
-function createChatListItem(chat) {
-    // Create the main container
-    const chatItem = document.createElement('div');
-    chatItem.classList.add('chat-list-item');
-    chatItem.setAttribute('data-id', chat.id);
-
-    // Create a span for the chat title (allows for better text overflow handling)
-    const chatTitle = document.createElement('span');
-    chatTitle.classList.add('chat-title');
-    chatTitle.textContent = chat.title || 'New Chat';
-    chatItem.appendChild(chatTitle);
-
-    // Create button container for better positioning
-    const buttonContainer = document.createElement('div');
-    buttonContainer.classList.add('chat-buttons');
-
-    // Create edit button
-    const editBtn = document.createElement('button');
-    editBtn.classList.add('chat-edit-btn');
-    editBtn.setAttribute('title', 'Edit chat name');
-
-    // Create edit icon
-    const editIcon = document.createElement('img');
-    editIcon.classList.add('edit-icon');
-    editIcon.src = './images/edit-button.svg';
-    editIcon.alt = 'Edit';
-    editBtn.appendChild(editIcon);
-
-    // Add edit functionality
-    editBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent chat selection when clicking edit
-        startEditingChatName(chat.id, chatTitle);
-    });
-
-    // Create delete button
-    const deleteBtn = document.createElement('button');
-    deleteBtn.classList.add('chat-delete-btn');
-    deleteBtn.setAttribute('title', 'Delete chat');
-
-    // Create delete icon
-    const deleteIcon = document.createElement('img');
-    deleteIcon.classList.add('delete-icon');
-    deleteIcon.src = './images/delete-icon.svg';
-    deleteIcon.alt = 'Delete';
-    deleteBtn.appendChild(deleteIcon);
-
-    // Add delete functionality
-    deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent chat selection when clicking delete
-
-        if (confirm('Are you sure you want to delete this chat?')) {
-            deleteChatById(chat.id);
-        }
-    });
-
-    // Add buttons to container
-    buttonContainer.appendChild(editBtn);
-    buttonContainer.appendChild(deleteBtn);
-
-    // Add button container to chat item
-    chatItem.appendChild(buttonContainer);
-
-    // Add click event for selecting the chat
-    chatItem.addEventListener('click', function () {
-        document.querySelectorAll('.chat-list-item').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
-        currentChatId = this.getAttribute('data-id');
-        displayMessages(currentChatId);
-    });
-
-    return chatItem;
-}
-
-function startEditingChatName(chatId, titleElement) {
-    // Create an input element
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'chat-title-edit';
-    input.value = titleElement.textContent;
-    input.maxLength = 50; // Reasonable max length
-
-    // Store original text in case of cancel
-    const originalText = titleElement.textContent;
-
-    // Replace the title element with the input
-    const chatItem = titleElement.closest('.chat-list-item');
-    chatItem.classList.add('editing');
-
-    // Replace title with input
-    titleElement.style.display = 'none';
-    chatItem.insertBefore(input, titleElement);
-
-    // Focus the input and select all text
-    input.focus();
-    input.select();
-
-    // Handle saving on Enter key
-    input.addEventListener('keydown', async (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            await saveChatName(chatId, input.value.trim() || originalText);
-            finishEditing(chatItem, titleElement, input);
-        } else if (e.key === 'Escape') {
-            // Cancel editing on Escape
-            finishEditing(chatItem, titleElement, input, originalText);
-        }
-    });
-
-    // Handle blur (clicking outside)
-    input.addEventListener('blur', async () => {
-        // Save if the value has changed
-        if (input.value.trim() !== originalText && input.value.trim() !== '') {
-            await saveChatName(chatId, input.value.trim());
-        }
-        finishEditing(chatItem, titleElement, input, input.value.trim() || originalText);
-    });
-
-    // Prevent the chat from being selected when clicking the input
-    input.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
-}
-
-// Function to finish editing and restore normal display
-function finishEditing(chatItem, titleElement, input, newText = null) {
-    // Remove editing class
-    chatItem.classList.remove('editing');
-
-    // Update title text if provided
-    if (newText !== null) {
-        titleElement.textContent = newText;
-    }
-
-    // Show the title element again
-    titleElement.style.display = '';
-
-    // Remove the input
-    if (input && input.parentNode) {
-        input.parentNode.removeChild(input);
+        console.error('Error loading chat:', error);
     }
 }
 
-// Function to save the new chat name to the server
-async function saveChatName(chatId, newName) {
+async function createDefaultChat() {
     try {
-        // Find the chat in local array
-        const chat = userChats.find(c => c.id === chatId);
-        if (!chat) return;
+        console.log("Creating default chat for user:", currentUser.id);
 
-        // Update in backend API
-        const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/chats/${chatId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                title: newName,
-                messages: chat.messages || []
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to update chat name');
-        }
-
-        // Update in local array
-        chat.title = newName;
-
-        console.log(`Chat name updated to: ${newName}`);
-    } catch (error) {
-        console.error('Error saving chat name:', error);
-        // You could show an error message to the user here
-    }
-}
-
-async function createNewChat() {
-    try {
-        console.log("Creating new chat for user:", currentUser.id);
-
-        // Create new chat in Supabase
+        // Create new chat in backend API
         const token = await getAuthToken();
         const response = await fetch(`${API_URL}/chats`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
-            }
+            },
+            body: JSON.stringify({
+                id: 'default', // Set the ID to 'default'
+                title: 'My Chat' // Set a default title
+            })
         });
 
         if (!response.ok) {
@@ -408,48 +125,11 @@ async function createNewChat() {
 
         const newChat = await response.json();
         currentChatId = newChat.id;
+        chatHistory = []; // Initialize chat history
 
-        // Add to local array
-        userChats.unshift(newChat);
-
-        // Add to UI
-        const chatsSection = document.getElementById('chatsSection');
-
-        // Find or create "Today" header
-        let todayHeader = Array.from(chatsSection.querySelectorAll('.date-header'))
-            .find(header => header.textContent === 'Today');
-
-        if (!todayHeader) {
-            todayHeader = document.createElement('div');
-            todayHeader.classList.add('date-header');
-            todayHeader.textContent = 'Today';
-
-            // Insert after the "Chats" header
-            const chatsHeader = chatsSection.querySelector('.chats-header');
-            if (chatsHeader) {
-                chatsSection.insertBefore(todayHeader, chatsHeader.nextSibling);
-            } else {
-                chatsSection.appendChild(todayHeader);
-            }
-        }
-
-        const chatItem = createChatListItem(newChat);
-
-        // Insert after the "Today" header
-        chatsSection.insertBefore(chatItem, todayHeader.nextSibling);
-
-        // Activate the new chat
-        document.querySelectorAll('.chat-list-item').forEach(i => i.classList.remove('active'));
-        chatItem.classList.add('active');
-
-        // Clear messages
-        chatMessages.innerHTML = '';
-
-        console.log("New chat UI updated");
-        return newChat;
+        console.log("New default chat created");
     } catch (error) {
         console.error('Error creating new chat:', error);
-        return null;
     }
 }
 
@@ -478,199 +158,25 @@ function getThinkingMessage() {
     return messages[Math.floor(Math.random() * messages.length)];
 }
 
-// Delete a chat by ID
-async function deleteChatById(chatId) {
+/* Save chat history to Supabase */
+async function saveChatHistory() {
     try {
-        const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/chats/${chatId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to delete chat');
-        }
-
-        // Remove from UI
-        const chatElement = document.querySelector(`.chat-list-item[data-id="${chatId}"]`);
-        if (chatElement) {
-            // Check if this was the active chat
-            const wasActive = chatElement.classList.contains('active');
-
-            // Get the date header
-            const dateHeader = chatElement.previousElementSibling;
-
-            // Remove the chat element
-            chatElement.remove();
-
-            // Check if this was the last chat under this date header
-            if (dateHeader && dateHeader.classList.contains('date-header')) {
-                const nextElement = dateHeader.nextElementSibling;
-                if (!nextElement || nextElement.classList.contains('date-header')) {
-                    // No more chats under this date header, remove it
-                    dateHeader.remove();
-                }
-            }
-
-            // Remove from local array
-            userChats = userChats.filter(chat => chat.id !== chatId);
-
-            // If this was the active chat, select another one
-            if (wasActive) {
-                if (userChats.length > 0) {
-                    currentChatId = userChats[0].id;
-                    const firstChatItem = document.querySelector('.chat-list-item');
-                    if (firstChatItem) {
-                        firstChatItem.classList.add('active');
-                    }
-                    displayMessages(currentChatId);
-                } else {
-                    // No chats left, create a new one
-                    createNewChat();
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Error deleting chat:', error);
-    }
-}
-
-// Get chat history from Supabase
-async function getChatHistory(chatId) {
-    try {
-        // Find the chat in the loaded chats
-        const chat = userChats.find(c => c.id === chatId);
-
-        if (chat) {
-            return chat.messages || [];
-        }
-        // If not found in loaded chats, fetch from backend API
-        const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/chats/${chatId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch chat history');
-        }
-
-        const data = await response.json();
-
-
-        return data.messages || [];
-    } catch (error) {
-        console.error('Error getting chat history:', error);
-        return [];
-    }
-}
-
-/* Save chat history to Supabase
-async function saveChatHistory(chatId, history) {
-    try {
-        // Update the chat title based on the first user message if it's "New Chat"
-        let title = 'New Chat';
-        const chat = userChats.find(c => c.id === chatId);
-
-        if (history.length > 0) {
-            const firstUserMessage = history.find(msg => msg.role === 'user');
-            if (firstUserMessage) {
-                // Use first 30 chars of first message as title
-                title = firstUserMessage.parts[0].text.substring(0, 30);
-                if (firstUserMessage.parts[0].text.length > 30) {
-                    title += '...';
-                }
-            }
-        }
-
         // Update in backend API
         const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/chats/${chatId}`, {
+        const response = await fetch(`${API_URL}/chats/default`, { // Use fixed chat ID
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                messages: history,
-                title: chat && chat.title !== 'New Chat' ? chat.title : title
+                messages: chatHistory,
+                title: 'My Chat' // Fixed title
             })
         });
 
         if (!response.ok) {
             throw new Error('Failed to save chat history');
-        }
-
-
-        // Update the chat title in the UI if it's a new chat
-        if (chat && chat.title === 'New Chat') {
-            const chatItem = document.querySelector(`.chat-list-item[data-id="${chatId}"]`);
-            if (chatItem) {
-                chatItem.textContent = title;
-            }
-
-            // Update in our local array
-            chat.title = title;
-        }
-    } catch (error) {
-        console.error('Error saving chat history:', error);
-    }
-}*/
-
-async function saveChatHistory(chatId, history) {
-    try {
-        // Update the chat title based on the first user message if it's "New Chat"
-        let title = 'New Chat';
-        const chat = userChats.find(c => c.id === chatId);
-
-        // Only auto-generate title if it's still the default "New Chat"
-        if (chat && chat.title === 'New Chat' && history.length > 0) {
-            const firstUserMessage = history.find(msg => msg.role === 'user');
-            if (firstUserMessage) {
-                // Use first 30 chars of first message as title
-                title = firstUserMessage.parts[0].text.substring(0, 30);
-                if (firstUserMessage.parts[0].text.length > 30) {
-                    title += '...';
-                }
-            }
-        } else if (chat) {
-            // Keep the existing title (which might be custom)
-            title = chat.title;
-        }
-
-        // Update in backend API
-        const token = await getAuthToken();
-        const response = await fetch(`${API_URL}/chats/${chatId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                messages: history,
-                title: title
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to save chat history');
-        }
-
-        // Update the chat title in the UI if it's a new chat
-        if (chat && chat.title === 'New Chat') {
-            const chatItem = document.querySelector(`.chat-list-item[data-id="${chatId}"]`);
-            if (chatItem) {
-                const titleElement = chatItem.querySelector('.chat-title');
-                if (titleElement) {
-                    titleElement.textContent = title;
-                }
-            }
-
-            // Update in our local array
-            chat.title = title;
         }
     } catch (error) {
         console.error('Error saving chat history:', error);
@@ -678,15 +184,12 @@ async function saveChatHistory(chatId, history) {
 }
 
 // Function to display messages in the UI
-const displayMessages = async (chatId) => {
+const displayMessages = () => {
     // Clear all messages
     chatMessages.innerHTML = '';
 
-    // Get chat history
-    const history = await getChatHistory(chatId);
-
     // Add messages to UI
-    history.forEach(message => {
+    chatHistory.forEach(message => {
         if (message.role === "user" || message.role === "model") {
             addMessageToUI(message.parts[0].text, message.role === "user");
         }
@@ -852,15 +355,12 @@ function formatAIResponse(text) {
             return html;
         }
 
-        // Regular paragraph with line breaks
         return `<p>${paragraph.replace(/\n/g, '<br>')}</p>`;
     }).join('');
 }
 
-
-const sendMessageToGemini = async (message, chatId) => {
+const sendMessageToGemini = async (message) => {
     try {
-        // Create and show typing indicator with typewriter effect
         const typingIndicator = document.createElement('div');
         typingIndicator.id = 'typingIndicator';
         typingIndicator.className = 'typing';
@@ -880,9 +380,6 @@ const sendMessageToGemini = async (message, chatId) => {
         // Scroll to bottom to show typing indicator
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        // Get chat history
-        const chatHistory = await getChatHistory(chatId);
-
         // Add user message to history
         chatHistory.push({
             role: "user",
@@ -890,7 +387,7 @@ const sendMessageToGemini = async (message, chatId) => {
         });
 
         // Save updated history
-        await saveChatHistory(chatId, chatHistory);
+        await saveChatHistory();
 
         // Call backend API
         const token = await getAuthToken();
@@ -902,7 +399,7 @@ const sendMessageToGemini = async (message, chatId) => {
             },
             body: JSON.stringify({
                 message,
-                chatId,
+                chatId: 'default', // Use fixed chat ID
                 history: chatHistory
             })
         });
@@ -921,7 +418,7 @@ const sendMessageToGemini = async (message, chatId) => {
         });
 
         // Save updated history with AI response
-        await saveChatHistory(chatId, chatHistory);
+        await saveChatHistory();
 
         // Remove typing indicator
         if (typingIndicator && typingIndicator.parentNode) {
@@ -961,49 +458,11 @@ const handleSendMessage = async () => {
 
     // Send to API
     try {
-        await sendMessageToGemini(message, currentChatId);
+        await sendMessageToGemini(message);
     } catch (error) {
         console.error("Failed to get response:", error);
     }
 };
-
-// Delete a chat
-async function deleteCurrentChat() {
-    if (!currentChatId) return;
-
-    try {
-        // Delete from Supabase
-        const { error } = await supabaseClient
-            .from('chats')
-            .delete()
-            .eq('id', currentChatId);
-
-        if (error) throw error;
-
-        // Remove from UI
-        const activeChat = document.querySelector(`.chat-list-item[data-id="${currentChatId}"]`);
-        if (activeChat) {
-            activeChat.remove();
-        }
-
-        // Remove from local array
-        userChats = userChats.filter(chat => chat.id !== currentChatId);
-
-        // Select another chat or create a new one
-        if (userChats.length > 0) {
-            currentChatId = userChats[0].id;
-            const firstChatItem = document.querySelector('.chat-list-item');
-            if (firstChatItem) {
-                firstChatItem.classList.add('active');
-            }
-            displayMessages(currentChatId);
-        } else {
-            createNewChat();
-        }
-    } catch (error) {
-        console.error('Error deleting chat:', error);
-    }
-}
 
 // Handle sign out
 async function handleSignOut() {
@@ -1026,19 +485,9 @@ chatInput.addEventListener('keypress', (e) => {
     }
 });
 
-newChatBtn.addEventListener('click', () => {
-    console.log("New chat button clicked");
-    createNewChat();
-});
-
-
 backToHome.addEventListener('click', () => {
     window.location.href = 'https://aifricaapp.com';
 });
-
-/*contactUs.addEventListener('click', () => {
-    window.location.href = 'mailto:support@aifricaapp.com';
-});*/
 
 signOut.addEventListener('click', () => {
     if (confirm('Are you sure you want to sign out?')) {
@@ -1108,116 +557,6 @@ const progressInterval = setInterval(() => {
     }
 }, 500);
 
-// Replace the simple filtering with this enhanced version that highlights matches
-searchInput.addEventListener('input', () => {
-    const searchTerm = searchInput.value.toLowerCase().trim();
-
-    // Show/hide clear button based on input content
-    if (searchInput.value) {
-        clearSearchBtn.style.display = 'flex';
-    } else {
-        clearSearchBtn.style.display = 'none';
-    }
-    const chatItems = document.querySelectorAll('.chat-list-item');
-
-    // Track if we have any matches
-    let hasMatches = false;
-
-    // Track which date headers have visible chats
-    const dateHeaders = document.querySelectorAll('.date-header');
-    const visibleHeaderMap = {};
-
-    // Initialize all headers as not having visible items
-    dateHeaders.forEach(header => {
-        visibleHeaderMap[header.textContent] = false;
-    });
-
-    // Filter chat items
-    chatItems.forEach(item => {
-        const titleElement = item.querySelector('.chat-title') || item;
-        const originalText = titleElement.getAttribute('data-original-text') || titleElement.textContent;
-
-        // Store original text if not already stored
-        if (!titleElement.getAttribute('data-original-text')) {
-            titleElement.setAttribute('data-original-text', originalText);
-        }
-
-        if (searchTerm && originalText.toLowerCase().includes(searchTerm)) {
-            item.style.display = 'flex'; // or whatever your default display value is
-            hasMatches = true;
-
-            // Highlight matching text
-            const regex = new RegExp(`(${searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
-            titleElement.innerHTML = originalText.replace(regex, '<span class="highlight">$1</span>');
-
-            // Find the preceding date header
-            let header = item.previousElementSibling;
-            while (header && !header.classList.contains('date-header')) {
-                header = header.previousElementSibling;
-            }
-
-            if (header && header.classList.contains('date-header')) {
-                visibleHeaderMap[header.textContent] = true;
-            }
-        } else {
-            // Reset to original text if no search term or no match
-            if (!searchTerm) {
-                titleElement.textContent = originalText;
-                item.style.display = 'flex'; // Show all items when search is cleared
-
-                // Find the preceding date header
-                let header = item.previousElementSibling;
-                while (header && !header.classList.contains('date-header')) {
-                    header = header.previousElementSibling;
-                }
-
-                if (header && header.classList.contains('date-header')) {
-                    visibleHeaderMap[header.textContent] = true;
-                }
-            } else {
-                item.style.display = 'none';
-            }
-        }
-    });
-
-    // Show/hide date headers based on whether they have visible chats
-    dateHeaders.forEach(header => {
-        header.style.display = visibleHeaderMap[header.textContent] ? 'block' : 'none';
-    });
-
-    // Show a "no results" message if needed
-    let noResultsMsg = document.getElementById('no-search-results');
-
-    if (!hasMatches && searchTerm) {
-        if (!noResultsMsg) {
-            noResultsMsg = document.createElement('div');
-            noResultsMsg.id = 'no-search-results';
-            noResultsMsg.className = 'no-results-message';
-            noResultsMsg.textContent = 'No chats match your search';
-
-            const chatsSection = document.getElementById('chatsSection');
-            // Insert after the "Chats" header
-            const chatsHeader = chatsSection.querySelector('.chats-header');
-            if (chatsHeader && chatsHeader.nextSibling) {
-                chatsSection.insertBefore(noResultsMsg, chatsHeader.nextSibling);
-            } else {
-                chatsSection.appendChild(noResultsMsg);
-            }
-        }
-        noResultsMsg.style.display = 'block';
-    } else if (noResultsMsg) {
-        noResultsMsg.style.display = 'none';
-    }
-
-    // Add visual indicator that search is active
-    const chatsSection = document.getElementById('chatsSection');
-    if (searchTerm) {
-        chatsSection.classList.add('search-active');
-    } else {
-        chatsSection.classList.remove('search-active');
-    }
-});
-
 // Clear the interval when the page is loaded
 window.addEventListener('load', () => {
     clearInterval(progressInterval);
@@ -1232,4 +571,4 @@ document.addEventListener('DOMContentLoaded', function () {
 // Add a timeout to ensure loading screen doesn't stay forever
 setTimeout(() => {
     hideLoadingScreen();
-}, 10000); // 10 seconds max loading time
+}, 10000);
