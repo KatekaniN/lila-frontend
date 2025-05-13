@@ -368,7 +368,7 @@ const sendMessageToGemini = async (message) => {
         const typewriterText = document.createElement('div');
         typewriterText.className = 'typewriter';
         typewriterText.textContent = getThinkingMessage();
-        typewriterText.color = '#fba0b7'
+        typewriterText.color = '#F78797'
 
         //typingIndicator.appendChild(avatar);
         typingIndicator.appendChild(typewriterText);
